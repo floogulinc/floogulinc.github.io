@@ -1,0 +1,27 @@
+{
+  "name": "floogulinc.github.io",
+  "private": true,
+  "homepage": "https://github.com/floogulinc/floogulinc.github.io",
+  "authors": [
+    "Paul Friederichsen <floogulinc@gmail.com>"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/floogulinc/floogulinc.github.io.git"
+  },
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.0.0",
+    "webcomponentsjs": "~0.7.12",
+    "iron-elements": "PolymerElements/iron-elements#1.0.0",
+    "neon-elements": "PolymerElements/neon-elements#1.0.0",
+    "paper-elements": "PolymerElements/paper-elements#1.0.1",
+    "platinum-elements": "PolymerElements/platinum-elements#1.0.1"
+  },
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
