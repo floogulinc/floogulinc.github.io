@@ -68,12 +68,12 @@
 	        <!-- Drawer Content -->
 	        <more-route-selector>
 	        <paper-menu class="list" on-iron-select="onMenuSelect">
-	          <a href="{{ makeUrl('home') }}" route="home">
+	          <a href="{{ makeUrl('home') }}" onclick="return false;" route="home">
 	            <iron-icon icon="home"></iron-icon>
 	            <span>Home</span>
 	          </a>
 
-	          <a href="{{ makeUrl('contact') }}" route="contact">
+	          <a href="{{ makeUrl('contact') }}" onclick="return false;" route="contact">
 	            <iron-icon icon="mail"></iron-icon>
 	            <span>Contact</span>
 	          </a>
