@@ -34,6 +34,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     return MoreRouting.urlFor(route);
   };
 
+  app.getMRoute = function(name) {
+    return MoreRouting.getRoute(name);
+  };
+
   // Main area's paper-scroll-header-panel custom condensing transformation of
   // the appName in the middle-container and the bottom title in the bottom-container.
   // The appName is moved to top and shrunk on condensing. The bottom sub title

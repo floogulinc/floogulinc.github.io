@@ -54,7 +54,8 @@
 
 	<more-routing-config driver="path"></more-routing-config>
 	<more-route name="home"  path="/"></more-route>
-	<more-route name="contact" path="/contact">
+	<more-route name="contact" path="/contact"></more-route>
+	<more-route name="404" path="/:aPath"></more-route>
 
 	    <paper-drawer-panel id="paperDrawerPanel">
 	      <!-- Drawer Scroll Header Panel -->
@@ -77,6 +78,7 @@
 	            <iron-icon icon="mail"></iron-icon>
 	            <span>Contact</span>
 	          </a>
+	          <div route="404"></div>
 	        </paper-menu>
 	        </more-route-selector>
 	      </paper-scroll-header-panel>
@@ -108,7 +110,7 @@
 	        <!-- Main Content -->
 	        <div class="content">
 
-	        <more-route-selector>
+	        <more-route-selector selectedParams="{{params}}">
 	          <iron-pages>
 
 	            <section route="home">
@@ -129,6 +131,13 @@
 	              <paper-material elevation="1">
 	                <h2 class="paper-font-display2">Contact</h2>
 	                <p>This is the contact section</p>
+	              </paper-material>
+	            </section>
+
+	             <section route="404">
+	              <paper-material elevation="1">
+	                <h2 class="paper-font-display2">404</h2>
+	                <p><span>{{params.aPath}}</span> Page not found.</p>
 	              </paper-material>
 	            </section>
 
