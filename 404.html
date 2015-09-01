@@ -4,49 +4,37 @@
 <head>
   	<meta charset="utf-8">
   	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-
   	<title>floogulinc</title>
   	<meta name="description" content="">
 	<meta name="author" content="Paul Friederichsen (floogulinc)">
   	<meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1">
-
   	<!-- Chrome for Android theme color -->
   	<meta name="theme-color" content="#00796B">
-
   	<!-- Web Application Manifest -->
   	<link rel="manifest" href="/manifest.json">
-
   	<!-- Tile color for Win8 -->
   	<meta name="msapplication-TileColor" content="#00796B">
-
   	<!-- Add to homescreen for Chrome on Android -->
   	<meta name="mobile-web-app-capable" content="yes">
   	<meta name="application-name" content="floogulinc">
   	<link rel="icon" sizes="192x192" href="/images/touch/chrome-touch-icon-192x192.png">
-
   	<!-- Other favicon sizes -->
   	<link rel="icon" sizes="16x16" href="/images/touch/favicon-16x16.png">
   	<link rel="icon" sizes="32x32" href="/images/touch/favicon-32x32.png">
   	<link rel="icon" sizes="96x96" href="/images/touch/favicon-96x96.png">
   	<link rel="icon" sizes="128x128" href="/images/touch/favicon-128x128.png">
   	<link rel="icon" sizes="512x512" href="/avatar.png">
-
   	<!-- Add to homescreen for Safari on iOS -->
   	<meta name="apple-mobile-web-app-capable" content="yes">
   	<meta name="apple-mobile-web-app-status-bar-style" content="black">
   	<meta name="apple-mobile-web-app-title" content="floogulinc">
 	<link rel="apple-touch-icon-precomposed" href="/images/touch/apple-touch-icon-152x152.png">
-
 	<!-- Tile icon for Win8 (144x144) -->
 	<meta name="msapplication-TileImage" content="/images/touch/ms-touch-icon-144x144.png">
-
 	<link rel="stylesheet" href="/styles/main.css">
-
-	<script src="/bower_components/webcomponentsjs/webcomponents-lite.js"></script>
-
-	<!-- will be replaced with elements/elements.vulcanized.html -->
+	<script src="/bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>
 	<link rel="import" href="/elements/elements-vulcanized.html">
-	<!-- endreplace-->
+	<!--<link rel="import" href="/elements/elements.html">-->
 </head>
 
 <body unresolved class="fullbleed layout vertical">
@@ -78,7 +66,7 @@
 	            <iron-icon icon="mail"></iron-icon>
 	            <span>Contact</span>
 	          </a>
-	          <div route="404"></div>
+	         <div route="404"></div>
 	        </paper-menu>
 	        </more-route-selector>
 	      </paper-scroll-header-panel>
@@ -134,7 +122,7 @@
 	              </paper-material>
 	            </section>
 
-	             <section route="404">
+	            <section route="404">
 	              <paper-material elevation="1">
 	                <h2 class="paper-font-display2">404</h2>
 	                <p>Page not found.</p>
