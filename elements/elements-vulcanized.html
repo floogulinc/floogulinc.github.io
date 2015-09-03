@@ -611,7 +611,7 @@ addEventListener('DOMContentLoaded', resolve);
 }
 }
 }());
-Polymer = {
+window.Polymer = {
 Settings: function () {
 var user = window.Polymer || {};
 location.search.slice(1).split('&').forEach(function (o) {
@@ -639,15 +639,21 @@ useNativeCustomElements: useNativeCustomElements
 (function () {
 var userPolymer = window.Polymer;
 window.Polymer = function (prototype) {
-var ctor = desugar(prototype);
-prototype = ctor.prototype;
-var options = { prototype: prototype };
-if (prototype.extends) {
-options.extends = prototype.extends;
+if (typeof prototype === 'function') {
+prototype = prototype.prototype;
 }
+if (!prototype) {
+prototype = {};
+}
+var factory = desugar(prototype);
+prototype = factory.prototype;
+var options = {
+prototype: prototype,
+extends: prototype.extends
+};
 Polymer.telemetry._registrate(prototype);
 document.registerElement(prototype.is, options);
-return ctor;
+return factory;
 };
 var desugar = function (prototype) {
 var base = Polymer.Base;
@@ -724,6 +730,8 @@ _addFeature: function (feature) {
 this.extend(this, feature);
 },
 registerCallback: function () {
+this._desugarBehaviors();
+this._doBehavior('beforeRegister');
 this._registerFeatures();
 this._doBehavior('registered');
 },
@@ -829,6 +837,7 @@ lcModules[id.toLowerCase()] = this;
 }
 },
 import: function (id, selector) {
+if (id) {
 var m = findModule(id);
 if (!m) {
 forceDocumentUpgrade();
@@ -839,6 +848,7 @@ m = m.querySelector(selector);
 }
 return m;
 }
+}
 });
 var cePolyfill = window.CustomElements && !CustomElements.useNative;
 document.registerElement('dom-module', DomModule);
@@ -846,8 +856,7 @@ function forceDocumentUpgrade() {
 if (cePolyfill) {
 var script = document._currentScript || document.currentScript;
 var doc = script && script.ownerDocument;
-if (doc && !doc.__customElementsForceUpgraded) {
-doc.__customElementsForceUpgraded = true;
+if (doc) {
 CustomElements.upgradeAll(doc);
 }
 }
@@ -869,11 +878,17 @@ this.is = this.is.toLowerCase();
 });
 Polymer.Base._addFeature({
 behaviors: [],
-_prepBehaviors: function () {
+_desugarBehaviors: function () {
 if (this.behaviors.length) {
-this.behaviors = this._flattenBehaviorsList(this.behaviors);
+this.behaviors = this._desugarSomeBehaviors(this.behaviors);
 }
-this._prepAllBehaviors(this.behaviors);
+},
+_desugarSomeBehaviors: function (behaviors) {
+behaviors = this._flattenBehaviorsList(behaviors);
+for (var i = behaviors.length - 1; i >= 0; i--) {
+this._mixinBehavior(behaviors[i]);
+}
+return behaviors;
 },
 _flattenBehaviorsList: function (behaviors) {
 var flat = [];
@@ -887,15 +902,6 @@ this._warn(this._logf('_flattenBehaviorsList', 'behavior is null, check for miss
 }
 }, this);
 return flat;
-},
-_prepAllBehaviors: function (behaviors) {
-for (var i = behaviors.length - 1; i >= 0; i--) {
-this._mixinBehavior(behaviors[i]);
-}
-for (var i = 0, l = behaviors.length; i < l; i++) {
-this._prepBehavior(behaviors[i]);
-}
-this._prepBehavior(this);
 },
 _mixinBehavior: function (b) {
 Object.getOwnPropertyNames(b).forEach(function (n) {
@@ -919,6 +925,15 @@ this.copyOwnProperty(n, b, this);
 break;
 }
 }, this);
+},
+_prepBehaviors: function () {
+this._prepFlattenedBehaviors(this.behaviors);
+},
+_prepFlattenedBehaviors: function (behaviors) {
+for (var i = 0, l = behaviors.length; i < l; i++) {
+this._prepBehavior(behaviors[i]);
+}
+this._prepBehavior(this);
 },
 _doBehavior: function (name, args) {
 this.behaviors.forEach(function (b) {
@@ -1152,7 +1167,7 @@ debouncer.stop();
 }
 }
 });
-Polymer.version = '1.1.1';
+Polymer.version = '1.1.2';
 Polymer.Base._addFeature({
 _registerFeatures: function () {
 this._prepIs();
@@ -1744,8 +1759,9 @@ return added;
 },
 _tryRemoveUndistributedNode: function (node) {
 if (this.node.shadyRoot) {
-if (node._composedParent) {
-nativeRemoveChild.call(node._composedParent, node);
+var parent = getComposedParent(node);
+if (parent) {
+nativeRemoveChild.call(parent, node);
 }
 return true;
 }
@@ -1782,7 +1798,7 @@ if (root && hostNeedsDist) {
 this._updateInsertionPoints(root.host);
 this._lazyDistribute(root.host);
 } else if (ensureComposedRemoval) {
-removeFromComposedParent(node._composedParent, node);
+removeFromComposedParent(getComposedParent(node), node);
 }
 },
 _removeDistributedChildren: function (root, container) {
@@ -2006,7 +2022,7 @@ configurable: true
 },
 parentNode: {
 get: function () {
-return this.node._lightParent || (this.node.__patched ? this.node._composedParent : this.node.parentNode);
+return this.node._lightParent || getComposedParent(this.node);
 },
 configurable: true
 },
@@ -2128,6 +2144,18 @@ DomApi.prototype._getComposedInnerHTML = function () {
 return getInnerHTML(this.node, true);
 };
 } else {
+var forwardMethods = [
+'cloneNode',
+'appendChild',
+'insertBefore',
+'removeChild',
+'replaceChild'
+];
+forwardMethods.forEach(function (name) {
+DomApi.prototype[name] = function () {
+return this.node[name].apply(this.node, arguments);
+};
+});
 DomApi.prototype.querySelectorAll = function (selector) {
 return Array.prototype.slice.call(this.node.querySelectorAll(selector));
 };
@@ -2139,9 +2167,6 @@ return n;
 }
 n = n.parentNode;
 }
-};
-DomApi.prototype.cloneNode = function (deep) {
-return this.node.cloneNode(deep);
 };
 DomApi.prototype.importNode = function (externalNode, deep) {
 var doc = this.node instanceof Document ? this.node : this.node.ownerDocument;
@@ -2189,7 +2214,7 @@ return this.node.innerHTML = value;
 configurable: true
 }
 });
-var forwards = [
+var forwardProperties = [
 'parentNode',
 'firstChild',
 'lastChild',
@@ -2200,7 +2225,7 @@ var forwards = [
 'nextElementSibling',
 'previousElementSibling'
 ];
-forwards.forEach(function (name) {
+forwardProperties.forEach(function (name) {
 Object.defineProperty(DomApi.prototype, name, {
 get: function () {
 return this.node[name];
@@ -2284,6 +2309,9 @@ node._composedChildren = null;
 addNodeToComposedChildren(node, parent, children, i);
 }
 }
+function getComposedParent(node) {
+return node.__patched ? node._composedParent : node.parentNode;
+}
 function addNodeToComposedChildren(node, parent, children, i) {
 node._composedParent = parent;
 children.splice(i >= 0 ? i : children.length, 0, node);
@@ -2314,6 +2342,7 @@ var p = Element.prototype;
 var matchesSelector = p.matches || p.matchesSelector || p.mozMatchesSelector || p.msMatchesSelector || p.oMatchesSelector || p.webkitMatchesSelector;
 return {
 getLightChildren: getLightChildren,
+getComposedParent: getComposedParent,
 getComposedChildren: getComposedChildren,
 removeFromComposedParent: removeFromComposedParent,
 saveLightChildrenIfNeeded: saveLightChildrenIfNeeded,
@@ -2502,7 +2531,9 @@ var composed = getComposedChildren(container);
 var splices = Polymer.ArraySplice.calculateSplices(children, composed);
 for (var i = 0, d = 0, s; i < splices.length && (s = splices[i]); i++) {
 for (var j = 0, n; j < s.removed.length && (n = s.removed[j]); j++) {
+if (getComposedParent(n) === container) {
 remove(n);
+}
 composed.splice(s.index + d, 1);
 }
 d -= s.addedCount;
@@ -2515,6 +2546,7 @@ insertBefore(container, n, next);
 composed.splice(j, 0, n);
 }
 }
+ensureComposedParent(container, children);
 },
 _matchesContentSelect: function (node, contentElement) {
 var select = contentElement.getAttribute('select');
@@ -2544,6 +2576,7 @@ var getLightChildren = Polymer.DomApi.getLightChildren;
 var matchesSelector = Polymer.DomApi.matchesSelector;
 var hasInsertionPoint = Polymer.DomApi.hasInsertionPoint;
 var getComposedChildren = Polymer.DomApi.getComposedChildren;
+var getComposedParent = Polymer.DomApi.getComposedParent;
 var removeFromComposedParent = Polymer.DomApi.removeFromComposedParent;
 function distributeNodeInto(child, insertionPoint) {
 insertionPoint._distributedNodes.push(child);
@@ -2597,8 +2630,10 @@ node._composedParent = null;
 nativeRemoveChild.call(parentNode, node);
 }
 }
-function getComposedParent(node) {
-return node.__patched ? node._composedParent : node.parentNode;
+function ensureComposedParent(parent, children) {
+for (var i = 0, n; i < children.length; i++) {
+children[i]._composedParent = parent;
+}
 }
 function getTopDistributingHost(host) {
 while (host && hostNeedsRedistribution(host)) {
@@ -2890,7 +2925,11 @@ if (!this._template) {
 this._notes = [];
 } else {
 Polymer.Annotations.prepElement = this._prepElement.bind(this);
+if (this._template._content && this._template._content._notes) {
+this._notes = this._template._content._notes;
+} else {
 this._notes = Polymer.Annotations.parseAnnotations(this._template);
+}
 this._processAnnotations(this._notes);
 Polymer.Annotations.prepElement = null;
 }
@@ -4887,6 +4926,9 @@ clearStyleRules: function (style) {
 style.__cssRules = null;
 },
 forEachStyleRule: function (node, callback) {
+if (!node) {
+return;
+}
 var s = node.parsedSelector;
 var skipRules = false;
 if (node.type === this.ruleTypes.STYLE_RULE) {
@@ -4915,18 +4957,21 @@ afterNode = n$[n$.length - 1];
 target.insertBefore(style, afterNode && afterNode.nextSibling || target.firstChild);
 return style;
 },
-cssFromModules: function (moduleIds) {
+cssFromModules: function (moduleIds, warnIfNotFound) {
 var modules = moduleIds.trim().split(' ');
 var cssText = '';
 for (var i = 0; i < modules.length; i++) {
-cssText += this.cssFromModule(modules[i]);
+cssText += this.cssFromModule(modules[i], warnIfNotFound);
 }
 return cssText;
 },
-cssFromModule: function (moduleId) {
+cssFromModule: function (moduleId, warnIfNotFound) {
 var m = Polymer.DomModule.import(moduleId);
 if (m && !m._cssText) {
 m._cssText = this._cssFromElement(m);
+}
+if (!m && warnIfNotFound) {
+console.warn('Could not find style data in module named', moduleId);
 }
 return m && m._cssText || '';
 },
@@ -4941,12 +4986,12 @@ cssText += this._cssFromElement(e);
 } else {
 if (e.localName === 'style') {
 var include = e.getAttribute(this.INCLUDE_ATTR);
+if (include) {
+cssText += this.cssFromModules(include, true);
+}
 e = e.__appliedElement || e;
 e.parentNode.removeChild(e);
 cssText += this.resolveCss(e.textContent, element.ownerDocument);
-if (include) {
-cssText += this.cssFromModules(include);
-}
 } else if (e.import && e.import.body) {
 cssText += this.resolveCss(e.import.body.textContent, e.import);
 }
@@ -5883,15 +5928,20 @@ observer.observe(e, { childList: true });
 _apply: function () {
 var e = this.__appliedElement || this;
 if (this.include) {
-e.textContent += styleUtil.cssFromModules(this.include);
+e.textContent = styleUtil.cssFromModules(this.include, true) + e.textContent;
 }
-var rules = styleUtil.rulesForStyle(e);
-styleUtil.forEachStyleRule(rules, function (rule) {
+if (e.textContent) {
+styleUtil.forEachStyleRule(styleUtil.rulesForStyle(e), function (rule) {
 styleTransformer.documentRule(rule);
 });
+this._applyCustomProperties(e);
+}
+},
+_applyCustomProperties: function (element) {
 this._computeStyleProperties();
 var props = this._styleProperties;
-e.textContent = styleUtil.toCssText(rules, function (rule) {
+var rules = styleUtil.rulesForStyle(element);
+element.textContent = styleUtil.toCssText(rules, function (rule) {
 var css = rule.cssText = rule.parsedCssText;
 if (rule.propertyInfo && rule.propertyInfo.cssText) {
 css = cssParse.removeCustomPropAssignment(css);
@@ -10279,6 +10329,7 @@ Example:
 
       /**
        * Returns the currently focused item.
+       * @type {?Object}
        */
       focusedItem: {
         observer: '_focusedItemChanged',
@@ -10881,1123 +10932,6 @@ be used as the label of the toolbar via `aria-labelledby`.
 @demo demo/index.html
 -->
 
-<!-- more-routing -->
-<script>
-(function(scope) {
-var MoreRouting = scope.MoreRouting = scope.MoreRouting || {};
-MoreRouting.Emitter = Object.create(null);  // Minimal set of properties.
-
-/**
- * A dumb prototype that provides very simple event subscription.
- *
- * You are responsible for initializing `__listeners` as an array on objects
- * that make use of this.
- */
-Object.defineProperties(MoreRouting.Emitter, {
-
-  /**
-   * Registers a callback that will be called each time any parameter managed by
-   * this object (or its parents) have changed.
-   *
-   * @param {!Function} callback
-   * @return {{close: function()}}
-   */
-  __subscribe: {
-    value: function __subscribe(callback) {
-      this.__listeners.push(callback);
-
-      return {
-        close: this.__unsubscribe.bind(this, callback),
-      };
-    },
-  },
-
-  /**
-   * Unsubscribes a previously registered callback.
-   *
-   * @param {!Function} callback
-   */
-  __unsubscribe: {
-    value: function __unsubscribe(callback) {
-      var index = this.__listeners.indexOf(callback);
-      if (index < 0) {
-        console.warn(this, 'attempted unsubscribe of unregistered listener:', callback);
-        return;
-      }
-      this.__listeners.splice(index, 1);
-    },
-  },
-
-  /**
-   * Notifies subscribed callbacks.
-   */
-  __notify: {
-    value: function __notify(key, value) {
-      if (this.__silent) return;
-      var args = Array.prototype.slice.call(arguments);
-      // Notify listeners on parents first.
-      var parent = Object.getPrototypeOf(this);
-      if (parent && parent.__notify && parent.__listeners) {
-        parent.__notify.apply(parent, args);
-      }
-
-      this.__listeners.forEach(function(listener) {
-        listener.apply(null, args);
-      }.bind(this));
-    },
-  },
-
-});
-
-})(window);
-</script>
-<script>
-(function(scope) {
-var MoreRouting = scope.MoreRouting = scope.MoreRouting || {};
-MoreRouting.Params = Params;
-
-/**
- * A collection of route parameters and their values, with nofications.
- *
- * Params prefixed by `__` are reserved.
- *
- * @param {!Array<string>} params The keys of the params being managed.
- * @param {Params=} parent A parent route's params to inherit.
- * @return {Params}
- */
-function Params(params, parent) {
-  var model = Object.create(parent || Params.prototype);
-  // We have a different set of listeners at every level of the hierarchy.
-  Object.defineProperty(model, '__listeners', {value: []});
-
-  // We keep all state enclosed within this closure so that inheritance stays
-  // relatively straightfoward.
-  var state = {};
-  _compile(model, params, state);
-
-  return model;
-}
-Params.prototype = Object.create(MoreRouting.Emitter);
-
-// Utility
-
-function _compile(model, params, state) {
-  params.forEach(function(param) {
-    Object.defineProperty(model, param, {
-      get: function() {
-        return state[param];
-      },
-      set: function(value) {
-        if (state[param] === value) return;
-        state[param] = value;
-        model.__notify(param, value);
-      },
-    });
-  });
-}
-
-})(window);
-</script>
-<script>
-(function(scope) {
-var MoreRouting = scope.MoreRouting = scope.MoreRouting || {};
-MoreRouting.Route = Route;
-
-// Note that this can differ from the part separator defined by the driver. The
-// driver's separator is used when parsing/generating URLs given to the client,
-// whereas this one is for route definitions.
-var PART_SEPARATOR    = '/';
-var PARAM_SENTINEL    = ':';
-var SEPARATOR_CLEANER = /\/\/+/g;
-
-/**
- * TODO(nevir): Docs.
- */
-function Route(path, parent) {
-  // For `MoreRouting.Emitter`; Emits changes for `active`.
-  this.__listeners = [];
-
-  this.path     = path;
-  this.parent   = parent;
-  this.fullPath = path;
-  this.compiled = this._compile(this.path);
-  this.active   = false;
-  this.driver   = null;
-
-  var params = MoreRouting.Params(namedParams(this.compiled), this.parent && this.parent.params);
-  params.__subscribe(this._navigateToParams.bind(this));
-  Object.defineProperty(this, 'params', {
-    get: function() { return params; },
-    set: function() { throw new Error('Route#params cannot be overwritten'); },
-  });
-
-  this.parts    = [];
-  this.children = [];
-
-  // Param values matching the current URL, or an empty object if not `active`.
-  //
-  // To make data "binding" easy, `Route` guarantees that `params` will always
-  // be the same object; just make a reference to it.
-  if (this.parent) {
-    this.parent.children.push(this);
-    this.fullPath  = this.parent.fullPath + this.fullPath;
-    this.depth     = this.parent.depth + this.compiled.length;
-    this.numParams = this.parent.numParams + countParams(this.compiled);
-  } else {
-    this.depth     = this.compiled.length;
-    this.numParams = countParams(this.compiled);
-  }
-}
-Route.prototype = Object.create(MoreRouting.Emitter);
-
-Object.defineProperty(Route.prototype, 'active', {
-  get: function() {
-    return this._active;
-  },
-  set: function(value) {
-    if (value !== this._active);
-    this._active = value;
-    this.__notify('active', value);
-  },
-});
-
-Route.isPath = function isPath(pathOrName) {
-  return pathOrName.indexOf(PART_SEPARATOR) === 0;
-};
-
-Route.joinPath = function joinPath(paths) {
-  var joined = Array.prototype.join.call(arguments, PART_SEPARATOR);
-  joined = joined.replace(SEPARATOR_CLEANER, PART_SEPARATOR);
-
-  var minLength = joined.length - PART_SEPARATOR.length;
-  if (joined.substr(minLength) === PART_SEPARATOR) {
-    joined = joined.substr(0, minLength);
-  }
-
-  return joined;
-};
-
-Route.prototype.urlFor = function urlFor(params) {
-  return this.driver.urlForParts(this.partsForParams(params));
-};
-
-Route.prototype.navigateTo = function navigateTo(params) {
-  return this.driver.navigateToParts(this.partsForParams(params));
-}
-
-Route.prototype.isCurrentUrl = function isCurrentUrl(params) {
-  if (!this.active) return false;
-  var currentKeys = Object.keys(this.params);
-  for (var i = 0, key; key = currentKeys[i]; i++) {
-    if (this.params[key] !== String(params[key])) {
-      return false;
-    }
-  }
-  return true;
-};
-
-// Driver Interface
-
-Route.prototype.partsForParams = function partsForParams(params, silent) {
-  var parts = this.parent && this.parent.partsForParams(params, silent) || [];
-  for (var i = 0, config; config = this.compiled[i]; i++) {
-    if (config.type === 'static') {
-      parts.push(config.part);
-    } else if (config.type === 'param') {
-      var value
-      if (params && config.name in params) {
-        value = params[config.name];
-      } else {
-        value = this.params[config.name];
-      }
-      if (value === undefined) {
-        if (silent) {
-          return null;
-        } else {
-          throw new Error('Missing param "' + config.name + '" for route ' + this);
-        }
-      }
-      parts.push(value);
-    }
-  }
-  return parts;
-};
-
-/**
- * Called by the driver whenever it has detected a change to the URL.
- *
- * @param {Array.<String>|null} parts The parts of the URL, or null if the
- *     route should be disabled.
- */
-Route.prototype.processPathParts = function processPathParts(parts) {
-  this.parts  = parts;
-  this.active = this.matchesPathParts(parts);
-
-  // We don't want to notify of these changes; they'd be no-op noise.
-  this.params.__silent = true;
-
-  if (this.active) {
-    var keys = Object.keys(this.params);
-    for (var i = 0; i < keys.length; i++) {
-      delete this.params[keys[i]];
-    }
-    for (var i = 0, config; config = this.compiled[i]; i++) {
-      if (config.type === 'param') {
-        this.params[config.name] = parts[i];
-      }
-    }
-  } else {
-    for (key in this.params) {
-      this.params[key] = undefined;
-    }
-  }
-
-  delete this.params.__silent;
-};
-
-Route.prototype.matchesPathParts = function matchesPathParts(parts) {
-  if (!parts) return false;
-  if (parts.length < this.compiled.length) return false;
-  for (var i = 0, config; config = this.compiled[i]; i++) {
-    if (config.type === 'static' && parts[i] !== config.part) {
-      return false;
-    }
-  }
-  return true;
-};
-
-Route.prototype.toString = function toString() {
-  return this.path;
-};
-
-// Internal Implementation
-
-Route.prototype._compile = function _compile(rawPath) {
-  // Not strictly required, but helps us stay consistent w/ `getRoute`, etc.
-  if (rawPath.indexOf(PART_SEPARATOR) !== 0) {
-    throw new Error('Route paths must begin with a path separator; got: "' + rawPath + '"');
-  }
-  var path = rawPath.substr(PART_SEPARATOR.length);
-  if (path === '') return [];
-
-  return path.split(PART_SEPARATOR).map(function(part) {
-    // raw fragment.
-    if (part.substr(0, 1) == PARAM_SENTINEL) {
-      return {type: 'param', name: part.substr(1)};
-    } else {
-      return {type: 'static', part: part};
-    }
-  });
-};
-
-Route.prototype._navigateToParams = function _navigateToParams() {
-  var parts = this.partsForParams(this.params, true);
-  if (!parts) return;
-  this.driver.navigateToParts(parts);
-};
-
-function countParams(compiled) {
-  return compiled.reduce(function(count, part) {
-    return count + (part.type === 'param' ? 1 : 0);
-  }, 0);
-}
-
-function namedParams(compiled) {
-  var result = [];
-  compiled.forEach(function(part) {
-    if (part.type === 'static') return;
-    result.push(part.name);
-  });
-  return result;
-}
-
-})(window);
-</script>
-<script>
-(function(scope) {
-var MoreRouting = scope.MoreRouting = scope.MoreRouting || {};
-
-// Route singletons.
-var routesByPath = {};
-var pathsByName  = {};
-
-// Route Management
-
-/**
- * Retrieves (or builds) the singleton `Route` for the given path expression or
- * route name.
- *
- * Paths begin with `/`; anything else is considered a name.
- *
- * For convenience, `Route` objects can also be passed (and will be returned) -
- * this can be used as a route coercion function.
- *
- * @param {String|MoreRouting.Route} pathOrName
- * @param {MoreRouting.Route} parent
- * @return {MoreRouting.Route}
- */
-MoreRouting.getRoute = function getRoute(pathOrName, parent) {
-  if (typeof pathOrName !== 'string') return pathOrName;
-  if (this.isPath(pathOrName)) {
-    return this.getRouteByPath(pathOrName, parent);
-  } else {
-    return this.getRouteByName(pathOrName);
-  }
-}
-
-/**
- * Retrieves (or builds) the singleton `Route` for the given path expression.
- *
- * @param {String} path
- * @param {MoreRouting.Route} parent
- * @return {MoreRouting.Route}
- */
-MoreRouting.getRouteByPath = function getRouteByPath(path, parent) {
-  var fullPath = (parent ? parent.fullPath : '') + path;
-  if (!routesByPath[fullPath]) {
-    routesByPath[fullPath] = new this.Route(path, parent);
-    this.driver.manageRoute(routesByPath[fullPath]);
-  }
-  return routesByPath[fullPath];
-}
-
-/**
- * Retrieves the route registered via `name`.
- *
- * @param {String} name
- * @return {MoreRouting.Route}
- */
-MoreRouting.getRouteByName = function getRouteByName(name) {
-  var path = pathsByName[name];
-  if (!path) {
-    throw new Error('No route named "' + name + '" has been registered');
-  }
-  return this.getRouteByPath(path);
-}
-
-/**
- * @param {String} path
- * @return {MoreRouting.Route} The newly registered route.
- */
-MoreRouting.registerNamedRoute = function registerNamedRoute(name, path, parent) {
-  if (pathsByName[name]) {
-    console.warn(
-        'Overwriting route named "' + name + '" with path:', path,
-        'previously:', pathsByName[name]);
-  }
-  var route = this.getRouteByPath(path, parent);
-  pathsByName[name] = route.fullPath;
-  return route;
-};
-
-// Route Shortcuts
-MoreRouting.urlFor = function urlFor(pathOrName, params) {
-  return this.getRoute(pathOrName).urlFor(params);
-};
-
-MoreRouting.navigateTo = function navigateTo(pathOrName, params) {
-  return this.getRoute(pathOrName).navigateTo(params);
-};
-
-MoreRouting.isCurrentUrl = function isCurrentUrl(pathOrName, params) {
-  return this.getRoute(pathOrName).isCurrentUrl(params);
-};
-
-// Utility
-
-/**
- *
- */
-MoreRouting.isPath = function isPath(pathOrName) {
-  return this.Route.isPath(pathOrName);
-}
-
-/**
- * @param {...String} paths
- */
-MoreRouting.joinPath = function joinPath(paths) {
-  return this.Route.joinPath.apply(this.Route, arguments);
-}
-
-// Driver Management
-
-var driver;
-Object.defineProperty(MoreRouting, 'driver', {
-  get: function getDriver() {
-    if (!driver) {
-      throw new Error('No routing driver configured. Did you forget <more-routing-config>?');
-    }
-    return driver;
-  },
-  set: function setDriver(newDriver) {
-    if (driver) {
-      console.warn('Changing routing drivers is not supported, ignoring. You should have only one <more-routing-config> on the page!');
-      return;
-    }
-    driver = newDriver;
-  }
-});
-
-})(window);
-</script>
-<!-- TODO(nevir): import on demand? -->
-<script>
-(function(scope) {
-var MoreRouting = scope.MoreRouting = scope.MoreRouting || {};
-MoreRouting.Driver = Driver;
-
-/**
- * TODO(nevir): Docs.
- */
-function Driver(opt_config) {
-  var config = opt_config || {};
-  if (config.prefix) this.prefix = config.prefix;
-
-  this._activeRoutes = [];
-
-  this._rootRoutes = [];
-}
-
-Driver.prototype.manageRoute = function manageRoute(route) {
-  route.driver = this;
-  this._appendRoute(route);
-
-  if (route.parent) {
-    if (route.parent.active) {
-      // Remember: `processPathParts` takes just the path parts relative to that
-      // route; not the full set.
-      route.processPathParts(this.currentPathParts.slice(route.parent.depth));
-    }
-  } else {
-    route.processPathParts(this.currentPathParts);
-  }
-
-  if (route.active) this._activeRoutes.push(route);
-};
-
-Driver.prototype.urlForParts = function urlForParts(parts) {
-  return this.prefix + parts.join(this.separator);
-};
-
-Driver.prototype.navigateToParts = function(parts) {
-  return this.navigateToUrl(this.urlForParts(parts));
-};
-
-Driver.prototype.navigateToUrl = function navigateToUrl(url) {
-  throw new Error(this.constructor.name + '#navigateToUrl not implemented');
-};
-
-// Subclass Interface
-
-Driver.prototype.prefix = '/';
-Driver.prototype.separator = '/';
-
-Driver.prototype.setCurrentPath = function setCurrentPath(path) {
-  this.currentPathParts = this.splitPath(path);
-  var newRoutes = this._matchingRoutes(this.currentPathParts);
-
-  // active -> inactive.
-  for (var i = 0, route; route = this._activeRoutes[i]; i++) {
-    if (newRoutes.indexOf(route) === -1) {
-      route.processPathParts(null);
-    }
-  }
-
-  this._activeRoutes = newRoutes;
-}
-
-Driver.prototype.splitPath = function splitPath(rawPath) {
-  if (this.prefix && rawPath.indexOf(this.prefix) !== 0) {
-    throw new Error(
-        'Invalid path "' + rawPath + '"; ' +
-        'expected it to be prefixed by "' + this.prefix + '"');
-  }
-  var path  = rawPath.substr(this.prefix.length);
-  var parts = path.split(this.separator);
-  // Ignore trailing separators.
-  if (!parts[parts.length - 1]) parts.pop();
-
-  return parts;
-};
-
-// Internal Implementation
-Driver.prototype._appendRoute = function _appendRoute(route) {
-  if (route.parent) {
-    // We only care about root routes.
-    return;
-  }
-  this._rootRoutes.push(route);
-};
-
-Driver.prototype._matchingRoutes = function _matchingRoutes(parts, rootRoutes) {
-  var routes = [];
-  var candidates = rootRoutes || this._rootRoutes;
-  var route;
-  for (var i = 0; i < candidates.length; i++) {
-    route = candidates[i];
-    route.processPathParts(parts);
-    if (route.active) {
-      routes.push(route);
-      routes = routes.concat(this._matchingRoutes(parts.slice(route.compiled.length), route.children));
-    }
-  }
-  return routes;
-}
-
-})(window);
-</script>
-<script>
-(function(scope) {
-var MoreRouting = scope.MoreRouting = scope.MoreRouting || {};
-MoreRouting.HashDriver = HashDriver;
-
-/**
- * TODO(nevir): Docs.
- */
-function HashDriver() {
-  MoreRouting.Driver.apply(this, arguments);
-  this._bindEvents();
-  this._read();
-}
-HashDriver.prototype = Object.create(MoreRouting.Driver.prototype);
-
-// By default, we prefer hashbang; but you can prefix with any string you wish.
-HashDriver.prototype.prefix = '!/';
-
-HashDriver.prototype.urlForParts = function urlForParts(parts) {
-  return '#' + MoreRouting.Driver.prototype.urlForParts.call(this, parts);
-};
-
-HashDriver.prototype.navigateToUrl = function navigateToUrl(url) {
-  window.location.hash = url;
-};
-
-HashDriver.prototype._bindEvents = function _bindEvents() {
-  window.addEventListener('hashchange', this._read.bind(this));
-};
-
-HashDriver.prototype._read = function _read() {
-  this.setCurrentPath(window.location.hash.substr(1) || this.prefix);
-};
-
-})(window);
-</script>
-<script>
-(function(scope) {
-var MoreRouting = scope.MoreRouting = scope.MoreRouting || {};
-MoreRouting.MockDriver = MockDriver;
-
-/** A mock driver for use in your tests. */
-function MockDriver() {
-  MoreRouting.Driver.apply(this, arguments);
-}
-MockDriver.prototype = Object.create(MoreRouting.Driver.prototype);
-
-MockDriver.prototype.navigateToUrl = function navigateToUrl(url) {
-  this.setCurrentPath(url);
-};
-
-})(window);
-</script>
-<script>
-(function(scope) {
-var MoreRouting = scope.MoreRouting = scope.MoreRouting || {};
-MoreRouting.PathDriver = PathDriver;
-
-/**
- * TODO(nevir): Docs.
- */
-function PathDriver() {
-  MoreRouting.Driver.apply(this, arguments);
-  this._bindEvents();
-  this._read();
-}
-PathDriver.prototype = Object.create(MoreRouting.Driver.prototype);
-
-PathDriver.prototype.navigateToUrl = function navigateToUrl(url) {
-  window.history.pushState({}, '', url);
-  this._read();
-};
-
-PathDriver.prototype._bindEvents = function _bindEvents() {
-  window.addEventListener('popstate', this._read.bind(this));
-};
-
-PathDriver.prototype._read = function _read() {
-  this.setCurrentPath(window.location.pathname);
-};
-
-})(window);
-</script>
-<script>
-
-  Polymer({
-
-    is: 'more-routing-config',
-
-    properties: {
-
-      /**
-       * The routing driver to use.
-       *
-       *  * `hash`: `MoreRouting.HashDriver`
-       *  * `path`: `MoreRouting.PathDriver`
-       *  * `mock`: `MoreRouting.MockDriver`
-       *
-       */
-      driver: String,
-
-      /**
-       *
-       */
-      urlPrefix: String,
-
-    },
-
-    ready: function() {
-      var config = {};
-      if (this.urlPrefix) config.prefix = this.urlPrefix;
-
-      var driver;
-      // TODO(nevir): Support custom drivers, too.
-      if (this.driver === 'hash') {
-        driver = new MoreRouting.HashDriver(config);
-      } else if (this.driver === 'path') {
-        driver = new MoreRouting.PathDriver(config);
-      } else if (this.driver === 'mock') {
-        driver = new MoreRouting.MockDriver(config);
-      } else {
-        throw new Error('Unknown driver type "' + this.driver + '"');
-      }
-
-      MoreRouting.driver = driver;
-    },
-
-  });
-
-</script>
-<script>
-
-  MoreRouting.ContextAware = {
-
-    /** @override */
-    ready: function() {
-      this._makeRoutingReady();
-    },
-
-    /**
-     * Calls `routingReady`, and ensures that it is called in a top-down manner.
-     *
-     * We need to be sure that parent nodes have `routingReady` triggered before
-     * their children so that they can properly configure nested routes.
-     *
-     * Unfortunately, `ready` is sometimes bottom-up, sometimes top-down.
-     * Ideally, this wouldn't be necessary.
-     *
-     * @see https://github.com/Polymer/polymer/pull/1448
-     */
-    _makeRoutingReady: function() {
-      if (this.routingIsReady) return;
-
-      var node = this;
-      while (node = Polymer.dom(node).parentNode) {
-        if (typeof node._makeRoutingReady === 'function') break;
-      }
-      if (node) node._makeRoutingReady();
-
-      this.parentRoute = this._findParentRoute();
-      this.routingIsReady = true;
-      if (typeof this.routingReady === 'function') this.routingReady();
-    },
-
-    _findParentRoute: function() {
-      var node = this;
-      while (node) {
-        node = Polymer.dom(node).parentNode;
-        if (node && node.nodeType !== Node.ELEMENT_NODE) {
-          node = node.host;
-        }
-
-        var route = node && node.moreRouteContext;
-        if (route instanceof MoreRouting.Route) {
-          return route;
-        }
-      }
-      return null;
-    },
-
-  };
-
-</script>
-<script>
-
-  Polymer({
-
-    is: 'more-route',
-
-    behaviors: [
-      MoreRouting.ContextAware,
-    ],
-
-    properties: {
-
-      /**
-       * The name of this route. Behavior differs based on the presence of
-       * `path` during _declaration_.
-       *
-       * If `path` is present during declaration, it is registered via `name`.
-       *
-       * Otherwise, this `more-route` becomes a `reference` to the route with
-       * `name`. Changing `name` will update which route is referenced.
-       */
-      name: {
-        type:     String,
-        observer: '_nameChanged',
-      },
-
-      /**
-       * A path expression used to parse parameters from the window's URL.
-       */
-      path: {
-        type:     String,
-        obserer: '_pathChanged',
-      },
-
-      /**
-       * Whether this route should become a context for the element that
-       * contains it.
-       */
-      context: {
-        type: Boolean,
-      },
-
-      /**
-       * The underlying `MoreRouting.Route` object that is being wrapped.
-       *
-       * @type {MoreRouting.Route}
-       */
-      route: {
-        type:     Object,
-        readOnly: true,
-        notify:   true,
-        observer: '_routeChanged',
-      },
-
-      /**
-       * The full path expression for this route, including routes this is
-       * nested within.
-       */
-      fullPath: {
-        type:     String,
-        readOnly: true,
-        notify:   true,
-      },
-
-      /**
-       * Param values matching the current URL, or an empty object if not
-       * `active`.
-       */
-      params: {
-        type:     Object,
-        // readOnly: true,
-        notify:   true,
-      },
-
-      /**
-       * Whether the route matches the current URL.
-       */
-      active: {
-        type:     Boolean,
-        readOnly: true,
-        notify:   true,
-      },
-
-    },
-
-    routingReady: function() {
-      this._identityChanged();
-    },
-
-    _nameChanged: function(newName, oldName) {
-      if (oldName) {
-        console.error('Changing the `name` property is not supported for', this);
-        return;
-      }
-      this._identityChanged();
-    },
-
-    _pathChanged: function(newPath, oldPath) {
-      if (oldPath) {
-        console.error('Changing the `path` property is not supported for', this);
-        return;
-      }
-      this._identityChanged();
-    },
-
-    _identityChanged: function() {
-      if (!this.routingIsReady) return;
-
-      if (this.name && this.path) {
-        this._setRoute(MoreRouting.registerNamedRoute(this.name, this.path, this.parentRoute));
-      } else if (this.name) {
-        this._setRoute(MoreRouting.getRouteByName(this.name));
-      } else if (this.path) {
-        this._setRoute(MoreRouting.getRouteByPath(this.path, this.parentRoute));
-      } else {
-        this._setRoute(null);
-      }
-    },
-
-    _routeChanged: function() {
-      this._observeRoute();
-      this._setFullPath(this.route.fullPath);
-      // this._setParams(this.route.params);
-      this.params = this.route.params;
-      this._setActive(this.route.active);
-
-      // @see MoreRouting.ContextAware
-      this.moreRouteContext = this.route;
-
-      if (this.context) {
-        var parent = Polymer.dom(this).parentNode;
-        if (parent.nodeType !== Node.ELEMENT_NODE) {
-          parent = parent.host;
-        }
-
-        if (parent.nodeType === Node.ELEMENT_NODE) {
-          parent.moreRouteContext = this.route;
-        } else {
-          console.warn('Unable to determine parent element for', this, '- not setting a context');
-        }
-      }
-    },
-
-    _observeRoute: function() {
-      // TODO(nevir) https://github.com/Polymore/more-routing/issues/24
-      if (this._routeListener) {
-        this._routeListener.close();
-        this._routeListener = null;
-      }
-      if (this._paramListener) {
-        this._paramListener.close();
-        this._paramListener = null;
-      }
-      if (!this.route) return;
-
-      this._routeListener = this.route.__subscribe(function() {
-        this._setActive(this.route && this.route.active);
-      }.bind(this));
-
-      this._paramListener = this.route.params.__subscribe(function(key, value) {
-        // https://github.com/Polymer/polymer/issues/1505
-        this.notifyPath('params.' + key, value);
-      }.bind(this));
-    },
-
-    urlFor: function(params) {
-      return this.route.urlFor(params);
-    },
-
-    navigateTo: function(params) {
-      return this.route.navigateTo(params);
-    },
-
-    isCurrentUrl: function(params) {
-      return this.route.isCurrentUrl(params);
-    },
-
-  });
-
-</script>
-<!--
-TODO(nevir): Document.
--->
-<script>
-
-  Polymer({
-
-    is: 'more-route-selection',
-
-    behaviors: [
-      MoreRouting.ContextAware,
-    ],
-
-    properties: {
-
-      /**
-       * Routes to select from, as either a path expression or route name.
-       *
-       * You can either specify routes via this attribute, or as child nodes
-       * to this element, but not both.
-       *
-       * @type {String|Array<string|MoreRouting.Route>}
-       */
-      routes: {
-        type:     String,
-        observer: '_routesChanged',
-      },
-
-      /**
-       * The selected `MoreRouting.Route` object, or `null`.
-       *
-       * @type {MoreRouting.Route}
-       */
-      selectedRoute: {
-        type:     Object,
-        value:    null,
-        readOnly: true,
-        notify:   true,
-      },
-
-      /**
-       * The index of the selected route (relative to `routes`). -1 when there
-       * is no active route.
-       */
-      selectedIndex: {
-        type:     Number,
-        value:    -1,
-        readOnly: true,
-        notify:   true,
-      },
-
-      /**
-       * The _full_ path expression of the selected route, or `null`.
-       */
-      selectedPath: {
-        type:     String,
-        readOnly: true,
-        notify:   true,
-      },
-
-      /**
-       * The params of the selected route, or an empty object if no route.
-       */
-      selectedParams: {
-        type:     Object,
-        readOnly: true,
-        notify:   true,
-      },
-
-    },
-
-    /**
-     * @event more-route-change fires when a new route is selected.
-     * @detail {{
-     *   newRoute:  MoreRouting.Route, oldRoute: MoreRouting.Route,
-     *   newIndex:  number,  oldIndex:  number,
-     *   newPath:   ?string, oldPath:   ?string,
-     *   newParams: Object,  oldParams: Object,
-     * }}
-     */
-
-    routingReady: function() {
-      this._routesChanged();
-    },
-
-    _routesChanged: function() {
-      if (!this.routingIsReady) return;
-      var routes = this.routes || [];
-      if (typeof routes === 'string') {
-        routes = routes.split(/\s+/);
-      }
-      this._routeInfo = this._sortIndexes(routes.map(function(route, index) {
-        return {
-          model: MoreRouting.getRoute(route, this.parentRoute),
-          index: index,
-        };
-      }.bind(this)));
-
-      this._observeRoutes();
-      this._evaluate();
-    },
-
-    /**
-     * Tracks changes to the routes.
-     */
-    _observeRoutes: function() {
-      if (this._routeListeners) {
-        for (var i = 0, listener; listener = this._routeListeners[i]; i++) {
-          listener.close();
-        }
-      }
-
-      this._routeListeners = this._routeInfo.map(function(routeInfo) {
-        return routeInfo.model.__subscribe(this._evaluate.bind(this));
-      }.bind(this));
-    },
-
-    _evaluate: function() {
-      var newIndex = -1;
-      var newRoute = null;
-      var oldIndex = this.selectedIndex;
-
-      for (var i = 0, routeInfo; routeInfo = this._routeInfo[i]; i++) {
-        if (routeInfo.model && routeInfo.model.active) {
-          newIndex = routeInfo.index;
-          newRoute = routeInfo.model;
-          break;
-        }
-      }
-      if (newIndex === oldIndex) return;
-
-      var oldRoute  = this.selectedRoute;
-      var oldPath   = this.selectedPath;
-      var oldParams = this.selectedParams;
-
-      var newPath   = newRoute ? newRoute.fullPath : null;
-      var newParams = newRoute ? newRoute.params   : {};
-
-      this._setSelectedRoute(newRoute);
-      this._setSelectedIndex(newIndex);
-      this._setSelectedPath(newPath);
-      this._setSelectedParams(newParams);
-
-      this.fire('more-route-change', {
-        newRoute:  newRoute,  oldRoute:  oldRoute,
-        newIndex:  newIndex,  oldIndex:  oldIndex,
-        newPath:   newPath,   oldPath:   oldPath,
-        newParams: newParams, oldParams: oldParams,
-      });
-    },
-    /**
-     * We want the most specific routes to match first, so we must create a
-     * mapping of indexes within `routes` that map
-     */
-    _sortIndexes: function(routeInfo) {
-      return routeInfo.sort(function(a, b) {
-        if (!a.model) {
-          return 1;
-        } else if (!b.model) {
-          return -1;
-        // Routes with more path parts are most definitely more specific.
-        } else if (a.model.depth < b.model.depth) {
-          return 1;
-        } if (a.model.depth > b.model.depth) {
-          return -1;
-        } else {
-
-          // Also, routes with fewer params are more specific. For example
-          // `/users/foo` is more specific than `/users/:id`.
-          if (a.model.numParams < b.model.numParams) {
-            return -1;
-          } else if (a.model.numParams > b.model.numParams) {
-            return 1;
-          } else {
-            // Equally specific; we fall back to the default (and hopefully
-            // stable) sort order.
-            return 0;
-          }
-        }
-      });
-    },
-
-  });
-</script>
-<!--
-TODO(nevir): Document.
-
-TODO(nevir): Support child addition/removal/reorder.
--->
 <!-- Uncomment next block to enable Service Worker Support (2/2) -->
 <!--
 <link rel="import" href="../bower_components/platinum-sw/platinum-sw-cache.html">
@@ -12005,8 +10939,32 @@ TODO(nevir): Support child addition/removal/reorder.
 -->
 
 <!-- Configure your routes here -->
-<!-- <link rel="import" href="routes.html">-->
+<script src="../bower_components/page/page.js"></script>
+<script>
+  window.addEventListener('WebComponentsReady', function() {
 
+    // We use Page.js for routing. This is a Micro
+    // client-side router inspired by the Express router
+    // More info: https://visionmedia.github.io/page.js/
+    page('/', function () {
+      app.route = 'home';
+    });
+
+    page('/contact', function () {
+      app.route = 'contact';
+    });
+
+    page('*', function () {
+      app.route = '404';
+    });
+
+    // add #! before urls
+    page({
+      hashbang: false
+    });
+
+  });
+</script>
 <!-- Add your elements here -->
 <style is="custom-style">
 
@@ -12277,7 +11235,6 @@ TODO(nevir): Support child addition/removal/reorder.
   </style>
 
   <template>
-    <iron-meta id="meta" type="iconset"></iron-meta>
   </template>
 
   <script>
@@ -12314,7 +11271,12 @@ TODO(nevir): Support child addition/removal/reorder.
         src: {
           type: String,
           observer: '_srcChanged'
+        },
+        
+        _meta: {
+          value: Polymer.Base.create('iron-meta', {type: 'iconset'})
         }
+        
       },
 
       _DEFAULT_ICONSET: 'icons',
@@ -12338,7 +11300,7 @@ TODO(nevir): Support child addition/removal/reorder.
       _updateIcon: function() {
         if (this._usesIconset()) {
           if (this._iconsetName) {
-            this._iconset = this.$.meta.byKey(this._iconsetName);
+            this._iconset = this._meta.byKey(this._iconsetName);
             if (this._iconset) {
               this._iconset.applyIcon(this, this._iconName, this.theme);
             } else {
@@ -15102,184 +14064,5 @@ TODO(nevir): Support child addition/removal/reorder.
 
   }());
 
-</script>
-<dom-module id="more-route-selector" assetpath="../bower_components/more-routing/">
-  <template>
-    <more-route-selection id="selection" routes="[[routes]]" on-more-route-change="_onMoreRouteChange">
-    </more-route-selection>
-    <content></content>
-  </template>
-</dom-module>
-<script>
-Polymer({
-
-  is: 'more-route-selector',
-
-  behaviors: [
-    MoreRouting.ContextAware,
-  ],
-
-  properties: {
-
-    /**
-     * The attribute to read route expressions from (on children).
-     */
-    routeAttribute: {
-      type: String,
-      value: 'route',
-    },
-
-    /**
-     * The routes managed by this element (inferred from the items that are
-     * defined by the selector it targets).
-     */
-    routes: {
-      type:     Array,
-      readOnly: true,
-      notify:   true,
-    },
-
-    /**
-     * The selected `MoreRouting.Route` object, or `null`.
-     *
-     * @type {MoreRouting.Route}
-     */
-    selectedRoute: {
-      type:     Object,
-      value:    null,
-      readOnly: true,
-      notify:   true,
-    },
-
-    /**
-     * The index of the selected route (relative to `routes`). -1 when there
-     * is no active route.
-     */
-    selectedIndex: {
-      type:     Number,
-      value:    -1,
-      readOnly: true,
-      notify:   true,
-    },
-
-    /**
-     * The _full_ path expression of the selected route, or `null`.
-     */
-    selectedPath: {
-      type:     String,
-      readOnly: true,
-      notify:   true,
-    },
-
-    /**
-     * The params of the selected route, or an empty object if no route.
-     */
-    selectedParams: {
-      type:     Object,
-      readOnly: true,
-      notify:   true,
-    },
-
-  },
-
-  /**
-   * @event more-route-selected fires when a new route is selected.
-   * @param {{
-   *   newRoute:  MoreRouting.Route, oldRoute: MoreRouting.Route,
-   *   newIndex:  number,  oldIndex:  number,
-   *   newPath:   ?string, oldPath:   ?string,
-   *   newParams: Object,  oldParams: Object,
-   * }}
-   */
-
-  attached: function() {
-    this._managedSelector = this._findTargetSelector();
-    if (!this._managedSelector) {
-      console.warn(this, 'was built without a selector to manage. It will do nothing.');
-      return;
-    }
-
-    this._managedSelector.addEventListener(
-        'selected-item-changed', this._onSelectedItemChanged.bind(this));
-    this._updateRoutes();
-  },
-
-  /**
-   * Handle a change in selected item, driven by the targeted selector.
-   *
-   * Note that this will fail if a route is chosen that requires params not
-   * defined by the current URL.
-   */
-  _onSelectedItemChanged: function(event) {
-    if (this._settingSelection) return;
-    var route = this._routeForItem(event.detail.value);
-    if (!route) return;
-    route.navigateTo();
-  },
-
-  _updateRoutes: function() {
-    var routes = [];
-    if (this._managedSelector) {
-      routes = this._managedSelector.items.map(this._routeForItem.bind(this));
-    }
-    this._setRoutes(routes);
-  },
-
-  _onMoreRouteChange: function(event) {
-    if (!this._managedSelector) return;
-
-    var selected = '';
-
-    var index = this.routes.indexOf(event.detail.newRoute);
-    var attrForSelected = this._managedSelector.attrForSelected;
-    if (!attrForSelected) {
-      selected = index;
-    } else {
-      var item = this._managedSelector.items[index];
-      if (item)
-        selected = item[attrForSelected] || item.getAttribute(attrForSelected);
-    }
-
-    // Make sure that we don't turn around and re-navigate
-    this._settingSelection = true;
-    this._managedSelector.select(selected);
-    this._settingSelection = false;
-  },
-
-  _findTargetSelector: function() {
-    var children = Polymer.dom(this).children;
-    if (children.length !== 1) {
-      console.error(this, 'expects only a single selector child');
-      return null;
-    }
-
-    var child = children[0];
-    if ('selected' in child && 'items' in child) {
-      return child;
-    } else {
-      console.error(this, 'can only manage children that are selectors');
-      return null;
-    }
-  },
-
-  _routeForItem: function(item) {
-    if (!item) return null;
-    if (item.moreRouteContext && item.moreRouteContext instanceof MoreRouting.Route) {
-      return item.moreRouteContext;
-    }
-
-    if (!item.hasAttribute(this.routeAttribute)) {
-      console.warn(item, 'is missing a context route or "' + this.routeAttribute + '" attribute');
-      return null;
-    }
-    var expression = item.getAttribute(this.routeAttribute);
-    var route      = MoreRouting.getRoute(expression, this.parentRoute);
-    // Associate the route w/ its element while we're here.
-    item.moreRouteContext = route;
-
-    return route;
-  },
-
-});
 </script>
 </div></body></html>

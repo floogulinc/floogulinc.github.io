@@ -30,6 +30,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     // imports are loaded and elements have been registered
   });
 
+/*
   app.makeUrl = function(route) {
     return MoreRouting.urlFor(route);
   };
@@ -37,6 +38,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   app.getMRoute = function(name) {
     return MoreRouting.getRoute(name);
   };
+*/
 
   // Main area's paper-scroll-header-panel custom condensing transformation of
   // the appName in the middle-container and the bottom title in the bottom-container.
