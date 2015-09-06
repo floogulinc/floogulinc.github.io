@@ -10947,17 +10947,17 @@ window.addEventListener('WebComponentsReady', function() {
     // client-side router inspired by the Express router
     // More info: https://visionmedia.github.io/page.js/
 
-    page('/', function(data) {
+    page('/', function() {
         app.route = 'home';
-        ga('send', 'pageview');
+        ga('send', 'pageview', '/');
     });
 
-    page('/contact', function(data) {
+    page('/contact', function() {
         app.route = 'contact';
-        ga('send', 'pageview');
+        ga('send', 'pageview', '/contact');
     });
 
-    page('*', function(data) {
+    page('*', function() {
         app.route = '404';
         ga('send', 'pageview');
     });
