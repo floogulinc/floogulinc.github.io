@@ -3,7 +3,7 @@ layout: default
 permalink: /
 ---
 
-![](avatar.png)
+<img src="avatar.png" style="display: block; margin: auto;"> 
 
 # Welcome
 
