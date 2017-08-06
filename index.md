@@ -11,9 +11,11 @@ I'm Paul Friederichsen and this is my site. It's a work in progress.
 
 ## Contact Info:
 
-* Email: [floogulinc@gmail.com](mailto:floogulinc@gmail.com)
-* [Twitter](https://twitter.com/floogulinc)
-* [GitHub](https://github.com/floogulinc)
-* [Google+](https://plus.google.com/+PaulFriederichsen)
-* [YouTube](https://www.youtube.com/user/floogulinc)
-* [Keybase](https://keybase.io/floogulinc)
+<ul>
+{% assign filteredaccounts = site.data.accounts | where_exp: "account","account.tags contains 'main'" %}
+{% for account in filteredaccounts %}
+<li>
+{% if account.username %}{{ account.name }}: {% endif %}{% if account.url %}<a href="{{account.url}}">{% endif %}{% if account.username %}{{ account.username }}{% else %}{{ account.name }}{% endif %}{% if account.url %}</a>{% endif %}
+</li>
+{% endfor %}
+</ul>

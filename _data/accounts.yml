@@ -1,0 +1,130 @@
+
+- name: Email
+  username: floogulinc@gmail.com
+  url: mailto:floogulinc@gmail.com
+  tags: [main]
+
+- name: Discord
+  username: floogulinc#6303
+  tags: [chat, gaming]
+
+- name: Blizzard Battle.net
+  username: floogulinc#1841
+  tags: [gaming]
+
+- name: Google+
+  url: https://plus.google.com/+PaulFriederichsen
+  tags: [main]
+
+- name: Twitter
+  url: https://twitter.com/floogulinc
+  tags: [main]
+
+- name: GitHub
+  url: https://github.com/floogulinc
+  tags: [main, code]
+
+- name: YouTube
+  url: https://www.youtube.com/user/floogulinc
+  tags: [main, video]
+
+- name: Keybase
+  url: https://keybase.io/floogulinc
+  tags: [main]
+
+- name: Twitch
+  url: https://www.twitch.tv/floogulinc
+  tags: [video]
+
+- name: Reddit
+  url: https://www.reddit.com/user/floogulinc/
+
+- name: Imgur
+  url: https://floogulinc.imgur.com/
+
+- name: Bitbucket
+  url: https://bitbucket.org/floogulinc/
+  tags: [code]
+
+- name: GitLab
+  url: https://gitlab.com/floogulinc
+  tags: [code]
+
+- name: LinkedIn
+  url: https://www.linkedin.com/in/floogulinc
+  tags: [main]
+
+- name: MyAnimeList
+  urls: 
+    - name: Profile
+      url: https://myanimelist.net/profile/floogulinc
+    - name: Anime List
+      url: https://myanimelist.net/animelist/floogulinc
+  tags: [anime]
+
+- name: BakaBT
+  url: https://bakabt.me/user/1381055/floogulinc
+  tags: [anime]
+
+- name: AnimeBytes
+  url: https://animebytes.tv/user.php?id=29624
+  tags: [anime]
+
+- name: Crunchyroll
+  url: http://www.crunchyroll.com/user/floogulinc
+  tags: [anime]
+
+- name: pixiv
+  url: https://www.pixiv.net/member.php?id=16114620
+
+- name: Picarto.TV
+  url: https://picarto.tv/floogulinc
+  tags: [video]
+
+- name: 
+  url: 
+
+- name: Mastodon
+  tags: [chat]
+  accounts:
+    - name: mastodon.xyz
+      username: '@floogulinc@mastodon.xyz'
+      url: https://mastodon.xyz/@floogulinc
+    - name: pawoo.net
+      username: '@floogulinc@pawoo.net'
+      url: https://pawoo.net/@floogulinc
+
+- name: Facebook
+  url: https://www.facebook.com/floogulinc
+
+- name: SoundCloud
+  url: https://soundcloud.com/floogulinc
+
+- name: Telegram
+  url: https://t.me/floogulinc
+  tags: [chat]
+
+- name: Vidme
+  url: https://vid.me/floogulinc
+  tags: [video]
+
+- name: Vimeo
+  url: https://vimeo.com/floogulinc
+  tags: [video]
+
+- name: 
+  url: 
+  tags: []
+  
+- name: 
+  url: 
+  tags: []
+  
+- name: 
+  url: 
+  tags: []
+  
+- name: 
+  url: 
+  tags: []
+  
