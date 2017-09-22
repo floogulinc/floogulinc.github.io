@@ -1,6 +1,8 @@
 ---
+title: Home
 layout: default
 permalink: /
+order: 1
 ---
 
 <img src="avatar.png" style="display: block; margin: auto;"> 

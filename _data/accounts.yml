@@ -55,7 +55,7 @@
   tags: [main]
 
 - name: MyAnimeList
-  urls: 
+  urls:
     - name: Profile
       url: https://myanimelist.net/profile/floogulinc
     - name: Anime List
@@ -81,8 +81,8 @@
   url: https://picarto.tv/floogulinc
   tags: [video]
 
-- name: 
-  url: 
+- name:
+  url:
 
 - name: Mastodon
   tags: [chat]
@@ -112,19 +112,19 @@
   url: https://vimeo.com/floogulinc
   tags: [video]
 
-- name: 
-  url: 
+- name:
+  url:
   tags: []
-  
-- name: 
-  url: 
+
+- name:
+  url:
   tags: []
-  
-- name: 
-  url: 
+
+- name:
+  url:
   tags: []
-  
-- name: 
-  url: 
+
+- name:
+  url:
   tags: []
-  
+

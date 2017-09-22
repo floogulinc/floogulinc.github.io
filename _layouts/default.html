@@ -7,7 +7,13 @@ layout: compress
 
 {% include head.html %}
 
-<body unresolved class="">
+<body unresolved>
+        <nav> |
+{% assign sorted_pages = site.pages | where_exp:"item", "item.order" | sort:"order" %}
+{% for node in sorted_pages %}
+      <a {% if page.url == node.url %}class="active"{% endif %} href="{{ site.baseurl }}{{node.url}}">{{node.title}}</a> |
+{% endfor %}
+        </nav>
 
 {{ content }}
 
