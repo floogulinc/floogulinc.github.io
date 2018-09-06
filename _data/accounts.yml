@@ -54,12 +54,16 @@
   url: https://www.linkedin.com/in/floogulinc
   tags: [main]
 
-- name: MyAnimeList
-  urls:
-    - name: Profile
-      url: https://myanimelist.net/profile/floogulinc
-    - name: Anime List
-      url: https://myanimelist.net/animelist/floogulinc
+#- name: MyAnimeList
+#  urls:
+#    - name: Profile
+#      url: https://myanimelist.net/profile/floogulinc
+#    - name: Anime List
+#      url: https://myanimelist.net/animelist/floogulinc
+#  tags: [anime]
+
+- name: AniList
+  url: https://anilist.co/user/floogulinc/
   tags: [anime]
 
 - name: BakaBT
@@ -87,11 +91,9 @@
 - name: Mastodon
   tags: [chat]
   accounts:
-    - name: mastodon.xyz
-      username: '@floogulinc@mastodon.xyz'
+    - name: '@floogulinc@mastodon.xyz'
       url: https://mastodon.xyz/@floogulinc
-    - name: pawoo.net
-      username: '@floogulinc@pawoo.net'
+    - name: '@floogulinc@pawoo.net'
       url: https://pawoo.net/@floogulinc
 
 - name: Facebook
@@ -112,9 +114,9 @@
   url: https://vimeo.com/floogulinc
   tags: [video]
 
-- name:
-  url:
-  tags: []
+- name: LINE
+  url: https://line.me/ti/p/mGXO50BCFM
+  tags: [main, chat]
 
 - name:
   url:
