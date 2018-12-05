@@ -66,13 +66,7 @@
   url: https://anilist.co/user/floogulinc/
   tags: [anime]
 
-- name: BakaBT
-  url: https://bakabt.me/user/1381055/floogulinc
-  tags: [anime]
 
-- name: AnimeBytes
-  url: https://animebytes.tv/user.php?id=29624
-  tags: [anime]
 
 - name: Crunchyroll
   url: http://www.crunchyroll.com/user/floogulinc
@@ -84,9 +78,6 @@
 - name: Picarto.TV
   url: https://picarto.tv/floogulinc
   tags: [video]
-
-- name:
-  url:
 
 - name: Mastodon
   tags: [chat]
@@ -106,10 +97,6 @@
   url: https://t.me/floogulinc
   tags: [chat]
 
-- name: Vidme
-  url: https://vid.me/floogulinc
-  tags: [video]
-
 - name: Vimeo
   url: https://vimeo.com/floogulinc
   tags: [video]
@@ -117,16 +104,3 @@
 - name: LINE
   url: https://line.me/ti/p/mGXO50BCFM
   tags: [main, chat]
-
-- name:
-  url:
-  tags: []
-
-- name:
-  url:
-  tags: []
-
-- name:
-  url:
-  tags: []
-
