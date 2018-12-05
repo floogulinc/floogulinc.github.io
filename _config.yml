@@ -21,6 +21,8 @@ repository: floogulinc/floogulinc.github.io
 sass:
   style: compressed
 
+permalink: /blog/:year/:month/:day/:title:output_ext
+
 # Build settings
 markdown: kramdown
 highlighter: rouge
