@@ -8,4 +8,6 @@ Now, to use Edy Viewer and other FeliCa things on the web, you need to use Inter
 
 I was able to figure out the solution thanks to [this blog post](https://backofthelid.com/windows10/edy/). You need to restore the `FSC2.dll` file in `C:\Program Files (x86)\Sony\FeliCa Secure Client\bin\`. After getting this file, run `regsvr32 "C:\Program Files (x86)\Sony\FeliCa Secure Client\bin\FSC2.dll"` in an administrator command prompt. After that you should be able to use the add-on in Internet Explorer.
 
-To get this DLL file, I created a Windows 7 VM and set the language/region to Japanese. Then I installed the Sony software which this time used the Japanese installer and installed the file needed. I have uploaded the `FSC2.dll` file [here](https://mega.nz/#!9I92ASLL!3_h49BOHVR4aLFoUR5I0oF_xC85Vwhvl-d8srul5VQw).
+To get this DLL file, I created a Windows 7 VM and set the language/region to Japanese. Then I installed the Sony software which this time used the Japanese installer and installed the file needed. 
+
+I have uploaded the `FSC2.dll` file [here](https://mega.nz/#!9I92ASLL!3_h49BOHVR4aLFoUR5I0oF_xC85Vwhvl-d8srul5VQw).
