@@ -2,7 +2,7 @@
 title: Contact
 layout: default
 permalink: /contact
-order: 2
+order: 3
 ---
 
 ## Some of my accounts:
