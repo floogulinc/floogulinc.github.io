@@ -79,13 +79,18 @@
   url: https://picarto.tv/floogulinc
   tags: [video]
 
+#- name: Mastodon
+#  tags: [chat, main]
+#  accounts:
+#    - name: '@floogulinc@mastodon.xyz'
+#      url: https://mastodon.xyz/@floogulinc
+#    - name: '@floogulinc@pawoo.net'
+#      url: https://pawoo.net/@floogulinc
+
 - name: Mastodon
-  tags: [chat, main]
-  accounts:
-    - name: '@floogulinc@mastodon.xyz'
-      url: https://mastodon.xyz/@floogulinc
-    - name: '@floogulinc@pawoo.net'
-      url: https://pawoo.net/@floogulinc
+  username: '@floogulinc@mastodon.xyz'
+  url: https://mastodon.xyz/@floogulinc
+  tags: [main]
 
 - name: Facebook
   url: https://www.facebook.com/floogulinc
