@@ -1,0 +1,39 @@
+{% if include.tag %}
+{% capture tagfilter %}
+account.tags contains '{{include.tag}}'
+{% endcapture %}
+{% assign filteredaccounts = site.data.accounts | where_exp: "account","account.name" | where_exp: "account",tagfilter %}
+{% else %}
+{% assign filteredaccounts = site.data.accounts | where_exp: "account","account.name" %}
+{% endif %}
+<ul>
+{% for account in filteredaccounts %}
+<li>
+{% if account.username %}{{ account.name }}: {% endif %}
+{% if account.url %}<a rel="me" href="{{account.url}}">{% endif %}
+{% if account.username %}{{ account.username }}{% else %}
+{{ account.name }}{% endif %}
+{% if account.url %}</a>{% endif %}
+{% if account.urls %}
+<ul>
+  {% for url in account.urls %}
+  <li><a rel="me" href="{{url.url}}">{{url.name}}</a></li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% if account.accounts %}
+<ul>
+{% for subaccount in account.accounts %}
+<li>
+{% if subaccount.username %}{{ subaccount.name }}: {% endif %}
+{% if subaccount.url %}<a rel="me" href="{{subaccount.url}}">{% endif %}
+{% if subaccount.username %}{{ subaccount.username }}{% else %}
+{{ subaccount.name }}{% endif %}
+{% if subaccount.url %}</a>{% endif %}
+</li>
+{% endfor %}
+</ul>
+{% endif %}
+</li>
+{% endfor %}
+</ul>

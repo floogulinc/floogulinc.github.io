@@ -14,7 +14,7 @@
 
 - name: Google+
   url: https://plus.google.com/+PaulFriederichsen
-  tags: [main]
+  tags: []
 
 - name: Twitter
   url: https://twitter.com/floogulinc
@@ -80,7 +80,7 @@
   tags: [video]
 
 - name: Mastodon
-  tags: [chat]
+  tags: [chat, main]
   accounts:
     - name: '@floogulinc@mastodon.xyz'
       url: https://mastodon.xyz/@floogulinc
@@ -104,3 +104,11 @@
 - name: LINE
   url: https://line.me/ti/p/mGXO50BCFM
   tags: [main, chat]
+
+- name: 500px
+  url: https://500px.com/floogulinc
+  tags: [photography]
+
+- name: Instagram
+  url: https://www.instagram.com/floogulinc/
+  tags: [photography]
