@@ -1,6 +1,7 @@
 ---
 ---
 @import "normalize.scss";
+@import "sakura/sakura-base.scss";
 @import "sakura/sakura.scss";
 
 .header-title {
@@ -9,4 +10,9 @@
 
 body {
   margin-bottom: 2em;
+}
+
+@media (prefers-color-scheme: dark) {
+  @import "sakura/sakura-vader.scss";
+
 }
