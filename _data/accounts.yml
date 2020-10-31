@@ -68,16 +68,16 @@
 
 
 
-- name: Crunchyroll
-  url: http://www.crunchyroll.com/user/floogulinc
-  tags: [anime]
+#- name: Crunchyroll
+#  url: http://www.crunchyroll.com/user/floogulinc
+#  tags: [anime]
 
 - name: pixiv
   url: https://www.pixiv.net/member.php?id=16114620
 
-- name: Picarto.TV
-  url: https://picarto.tv/floogulinc
-  tags: [video]
+#- name: Picarto.TV
+#  url: https://picarto.tv/floogulinc
+#  tags: [video]
 
 #- name: Mastodon
 #  tags: [chat, main]
