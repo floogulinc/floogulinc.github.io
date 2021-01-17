@@ -5,7 +5,7 @@ permalink: /
 order: 1
 ---
 
-<img src="avatar.png" style="display: block; margin: auto;"> 
+<img src="avatar.png" style="display: block; margin: auto;" alt=""> 
 
 # Welcome
 
