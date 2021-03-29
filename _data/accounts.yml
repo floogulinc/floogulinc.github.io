@@ -4,6 +4,35 @@
   url: mailto:floogulinc@gmail.com
   tags: [main]
 
+- name: GitHub
+  url: https://github.com/floogulinc
+  tags: [main, code]
+
+- name: Twitter
+  url: https://twitter.com/floogulinc
+  tags: [main]
+
+- name: Mastodon
+  username: '@floogulinc@mastodon.xyz'
+  url: https://mastodon.xyz/@floogulinc
+  tags: [main]
+
+- name: LinkedIn
+  url: https://www.linkedin.com/in/floogulinc
+  tags: [main]
+
+- name: Keybase
+  url: https://keybase.io/floogulinc
+  tags: [main]
+
+- name: Telegram
+  url: https://t.me/floogulinc
+  tags: [chat]
+
+- name: LINE
+  url: https://line.me/ti/p/mGXO50BCFM
+  tags: [main, chat]
+
 - name: Discord
   username: floogulinc#6303
   tags: [chat, gaming]
@@ -16,21 +45,9 @@
   url: https://steamcommunity.com/id/floogulinc/
   tags: [gaming]
 
-- name: Twitter
-  url: https://twitter.com/floogulinc
-  tags: [main]
-
-- name: GitHub
-  url: https://github.com/floogulinc
-  tags: [main, code]
-
 - name: YouTube
   url: https://www.youtube.com/user/floogulinc
   tags: [main, video]
-
-- name: Keybase
-  url: https://keybase.io/floogulinc
-  tags: [main]
 
 - name: Twitch
   url: https://www.twitch.tv/floogulinc
@@ -40,29 +57,12 @@
   url: https://gitlab.com/floogulinc
   tags: [code]
 
-- name: LinkedIn
-  url: https://www.linkedin.com/in/floogulinc
-  tags: [main]
-
 - name: AniList
   url: https://anilist.co/user/floogulinc/
   tags: [anime]
 
-- name: Mastodon
-  username: '@floogulinc@mastodon.xyz'
-  url: https://mastodon.xyz/@floogulinc
-  tags: [main]
-
 - name: Facebook
   url: https://www.facebook.com/floogulinc
-
-- name: Telegram
-  url: https://t.me/floogulinc
-  tags: [chat]
-
-- name: LINE
-  url: https://line.me/ti/p/mGXO50BCFM
-  tags: [main, chat]
 
 - name: 500px
   url: https://500px.com/floogulinc
