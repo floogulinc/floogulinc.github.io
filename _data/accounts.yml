@@ -27,7 +27,7 @@
 
 - name: Telegram
   url: https://t.me/floogulinc
-  tags: [chat]
+  tags: [main, chat]
 
 - name: LINE
   url: https://line.me/ti/p/mGXO50BCFM
@@ -47,7 +47,7 @@
 
 - name: YouTube
   url: https://www.youtube.com/user/floogulinc
-  tags: [main, video]
+  tags: [video]
 
 - name: Twitch
   url: https://www.twitch.tv/floogulinc
