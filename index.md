@@ -5,8 +5,6 @@ permalink: /
 order: 1
 ---
 
-<img src="avatar.png" style="display: block; margin: auto;" alt=""> 
-
 # Welcome
 
 I'm Paul Friederichsen and this is my site. It's a work in progress.
